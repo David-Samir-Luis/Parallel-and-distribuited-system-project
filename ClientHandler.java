@@ -76,6 +76,18 @@ public class ClientHandler implements Runnable{
             else if (cmsg.startsWith("removeFromCart")){
                 removeFromCartDB(cmsg);    
             }
+            else if (cmsg.startsWith("getAvailQun")){
+                getAvailQunDB(cmsg);
+            }
+            else if (cmsg.startsWith("addProduct")){
+                addProductDB(cmsg);
+            }
+            else if (cmsg.startsWith("editProduct")){
+                editProductDB(cmsg);
+            }            
+            else if (cmsg.startsWith("deleteProduct")){
+                deleteProductDB(cmsg);
+            }      
         }
     }
  //////////////// Sign Up function /////////////////
@@ -311,7 +323,7 @@ public class ClientHandler implements Runnable{
    }
     
     
-    //////////////// Get Products function /////////////////
+    //////////////// Get Products function in Bill /////////////////
     private void getproductsDB(){
         String products="";
         Statement stmt=null;
@@ -337,7 +349,7 @@ public class ClientHandler implements Runnable{
             }
         }
     }
-    //////////////// Add to cart function /////////////////
+    //////////////// Add to cart function in Bill /////////////////
     private void addToCartDB(String cmsg){
         String []cmsgArray=cmsg.split("~@");
         PreparedStatement stmt=null;
@@ -369,7 +381,7 @@ public class ClientHandler implements Runnable{
             }
         }
     }
-        //////////////// Add to cart function /////////////////
+        //////////////// Add to cart function in Bill /////////////////
     private void removeFromCartDB(String cmsg){
         
         String []cmsgArray=cmsg.split("~@");
@@ -419,6 +431,128 @@ public class ClientHandler implements Runnable{
         }
         
         
+    }
+          //////////////// Get available quantity function in Bill/////////////////
+    private void getAvailQunDB(String cmsg){
+        String []cmsgArray=cmsg.split("~@");
+        int quan=-1 ;
+        Statement stmt=null;
+        try {
+            // table name
+            String Q = "select quantity from product where pname='"+cmsgArray[1]+"'";            
+            stmt = con.createStatement();                                                   
+            ResultSet rs =stmt.executeQuery(Q);
+            while(rs.next()){
+            quan = rs.getInt("quantity");
+            }
+            out.println(quan);            
+
+        } catch (SQLException ex) { 
+        }
+        finally{
+            try {
+                if(stmt !=null)
+                    stmt.close();
+            } catch (SQLException ex) {
+                Logger.getLogger(ClientHandler.class.getName()).log(Level.SEVERE, null, ex);
+            }
+        }
+    }
+        //////////////// Add product function in Manage products /////////////////
+    private void addProductDB(String cmsg){
+        String []cmsgArray=cmsg.split("~@");
+        PreparedStatement stmt=null;
+        Statement productSearch=null;
+        PreparedStatement updateQ=null;
+        
+        try {
+            
+            String Q2 = "select pname from product where pname='"+cmsgArray[3]+"'";            
+            productSearch = con.createStatement();                                                   
+            ResultSet rs2 =productSearch.executeQuery(Q2);
+            if(rs2.next()){
+                
+                updateQ=con.prepareStatement("update product set quantity=quantity+? where pname=?  ");
+                updateQ.setInt(1, Integer.parseInt(cmsgArray[1]));
+                updateQ.setString(2,cmsgArray[3]);              
+                updateQ.executeUpdate();
+                
+            }
+            else{
+                stmt=con.prepareStatement("INSERT INTO product VALUES(?,?,?,?)");
+                System.out.println(cmsg);
+                stmt.setInt(1, Integer.parseInt(cmsgArray[1]));
+                stmt.setFloat(2,Float.parseFloat(cmsgArray[2]));
+                stmt.setString(3,cmsgArray[3]);
+                stmt.setString(4,cmsgArray[4]);
+                stmt.executeUpdate();
+            }
+            
+            
+           
+        }   catch (SQLException ex) {
+            Logger.getLogger(ClientHandler.class.getName()).log(Level.SEVERE, null, ex);
+        }
+        finally{
+            try {
+                if(stmt !=null)
+                    stmt.close();
+                if(updateQ !=null)
+                    updateQ.close();
+                if(productSearch !=null)
+                    productSearch.close();
+            } catch (SQLException ex) {
+                Logger.getLogger(ClientHandler.class.getName()).log(Level.SEVERE, null, ex);
+            }
+        }
+    }
+          //////////////// Edit product function in Manage products /////////////////
+    private void editProductDB(String cmsg){
+        String []cmsgArray=cmsg.split("~@");
+        PreparedStatement update=null;
+        String q="update product set quantity=? , price=? , cat_name=? where pname=?";
+        try {  
+                update=con.prepareStatement(q);
+                update.setInt(1, Integer.parseInt(cmsgArray[1]));
+                update.setFloat(2,Float.parseFloat(cmsgArray[2]));
+                update.setString(3,cmsgArray[4]); 
+                update.setString(4,cmsgArray[3]);
+                update.executeUpdate();
+                
+            }
+           catch (SQLException ex) {
+            Logger.getLogger(ClientHandler.class.getName()).log(Level.SEVERE, null, ex);
+        }
+        finally{
+            try {               
+                if(update !=null)
+                    update.close();               
+            } catch (SQLException ex) {
+                Logger.getLogger(ClientHandler.class.getName()).log(Level.SEVERE, null, ex);
+            }
+        }
+    }
+          //////////////// Delete product function in Manage products /////////////////
+    private void deleteProductDB(String cmsg){
+        String []cmsgArray=cmsg.split("~@");
+        PreparedStatement update=null;
+        String q="delete from product where pname=?";
+        try {  
+                update=con.prepareStatement(q);
+                update.setString(1,cmsgArray[1]);
+                update.executeUpdate();               
+            }
+           catch (SQLException ex) {
+            Logger.getLogger(ClientHandler.class.getName()).log(Level.SEVERE, null, ex);
+        }
+        finally{
+            try {               
+                if(update !=null)
+                    update.close();               
+            } catch (SQLException ex) {
+                Logger.getLogger(ClientHandler.class.getName()).log(Level.SEVERE, null, ex);
+            }
+        }
     }
     //////////////// Get Purshased items function /////////////////
   
